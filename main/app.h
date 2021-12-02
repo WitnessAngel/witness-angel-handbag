@@ -10,3 +10,6 @@ struct app_s {
 };
 
 void record(app_t *app, const char *fname);
+
+/* esp_err_t encrypt(void *data, void *encrypted, size_t size); */
+void encodetest(int16_t *input, int16_t *output, size_t size);

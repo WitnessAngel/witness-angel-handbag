@@ -15,14 +15,8 @@ static esp_err_t app_init(app_t *app) {
   esp_err_t err;
 
   if ((err = nvs_init())
-      /* || (err = appScreen_init(&app->screen)) */
-      /* || (err = esp_netif_init()) */
-      /* || (err = esp_event_loop_create_default())) */
-      /* || (err = multicastDNS_init()) */
-      /* || (err = appServer_init(app)) */
       || (err = sdCard_init())
 	  || (err = i2sMicro_init(&app->i2sMicro)))
-  /* || (err = wifi_init(&app->wifi)) */
   {
     ESP_LOGE(TAG, "Error during app init : (%s) !\n", esp_err_to_name(err));
     return (err);
@@ -39,4 +33,9 @@ void app_main(void)
 	ESP_ERROR_CHECK(app_init(&app));
 	ESP_LOGI(TAG, "appMicro begin");
 	record(&app, "/sdcard/manu.wav");
+	/*
+	 * esp_test_encryption
+	 */
+
+
 }
