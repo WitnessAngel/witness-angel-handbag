@@ -32,10 +32,5 @@ void app_main(void)
 
 	ESP_ERROR_CHECK(app_init(&app));
 	ESP_LOGI(TAG, "appMicro begin");
-	record(&app, "/sdcard/manu.wav");
-	/*
-	 * esp_test_encryption
-	 */
-
-
+	record(&app, "/sdcard/record.wav");
 }
