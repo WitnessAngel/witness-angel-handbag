@@ -811,18 +811,6 @@ CONFIG_HEAP_TRACING_OFF=y
 # end of Heap memory debugging
 
 #
-# jsmn
-#
-# CONFIG_JSMN_PARENT_LINKS is not set
-# CONFIG_JSMN_STRICT is not set
-# end of jsmn
-
-#
-# libsodium
-#
-# end of libsodium
-
-#
 # Log output
 #
 # CONFIG_LOG_DEFAULT_LEVEL_NONE is not set

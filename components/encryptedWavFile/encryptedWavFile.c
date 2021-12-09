@@ -33,14 +33,13 @@ void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate)
     self->file_size = sizeof(encrypted_wav_header_t);
 }
 
-void encryptedWavFile_write(encryptedWavFile_t* self, int16_t* samples,
-                            int count)
-{
-    esp_aes_crypt_cbc(&self->ctx, ESP_AES_ENCRYPT, count, self->iv,
-                      (uint8_t*)samples, (uint8_t*)samples);
-    // write the samples and keep track of the file size so far
-    fwrite(samples, sizeof(int16_t), count, self->fd);
-    self->file_size += sizeof(int16_t) * count;
+void encryptedWavFile_write(encryptedWavFile_t *self, int16_t *samples,
+                            int16_t *encrypted_samples, int count) {
+  esp_aes_crypt_cbc(&self->ctx, ESP_AES_ENCRYPT, count, self->iv,
+                    (uint8_t *)samples, (uint8_t *)encrypted_samples);
+  // write the samples and keep track of the file size so far
+  fwrite(encrypted_samples, sizeof(int16_t), count, self->fd);
+  self->file_size += sizeof(int16_t) * count;
 }
 
 void encryptedWavFile_finish(encryptedWavFile_t* self)

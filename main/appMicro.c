@@ -16,6 +16,7 @@ void record(app_t* app, const char* fname)
     encryptedWavFile_t encryptedWavFile;
 
     int16_t* samples = (int16_t*)malloc(sizeof(int16_t) * 1024);
+    int16_t* encrypted_samples = (int16_t*)malloc(sizeof(int16_t) * 1024);
     ESP_LOGI(TAG, "Start recording");
     i2sMicro_start(&app->i2sMicro);
     // open the file on the sdcard
@@ -35,7 +36,8 @@ void record(app_t* app, const char* fname)
         /* encodetest(samples, encrypted, samples_read * sizeof(int16_t)); */
         int64_t start = esp_timer_get_time();
         wavFile_write(&wavFile, samples, samples_read);
-        encryptedWavFile_write(&encryptedWavFile, samples, samples_read);
+        encryptedWavFile_write(&encryptedWavFile, samples, encrypted_samples,
+                               samples_read);
         int64_t end = esp_timer_get_time();
         ESP_LOGI(TAG, "Wrote %d samples in %lld microseconds", samples_read,
                  end - start);

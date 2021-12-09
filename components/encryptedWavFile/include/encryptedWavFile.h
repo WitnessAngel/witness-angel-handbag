@@ -42,6 +42,5 @@ struct encryptedWavFile_s
 };
 
 void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate);
-void encryptedWavFile_write(encryptedWavFile_t* self, int16_t* samples,
-                            int count);
+void encryptedWavFile_write(encryptedWavFile_t* self, int16_t* samples, int16_t* encrypted_samples, int count);
 void encryptedWavFile_finish(encryptedWavFile_t* self);
