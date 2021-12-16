@@ -2,6 +2,8 @@
 
 #include <aes/esp_aes.h>
 
+#include "encrypter.h"
+
 #pragma pack(push, 1)
 typedef struct _encrypted_wav_header
 {
@@ -36,11 +38,11 @@ struct encryptedWavFile_s
     size_t file_size;
     FILE* fd;
     encrypted_wav_header_t header;
-    uint8_t key[32];
-    uint8_t iv[16];
-    esp_aes_context ctx;
+    size_t buffer_length;
+    encrypter_t encrypter;
 };
 
-void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate);
-void encryptedWavFile_write(encryptedWavFile_t* self, int16_t* samples, int16_t* encrypted_samples, int count);
+void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate,
+                           size_t buffer_length);
+void encryptedWavFile_write(encryptedWavFile_t* self, int16_t** samples);
 void encryptedWavFile_finish(encryptedWavFile_t* self);
