@@ -38,7 +38,7 @@ void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate,
 
 void encryptedWavFile_write(encryptedWavFile_t* self, int16_t** samples)
 {
-    encrypter_crypt(&self->encrypter, (uint8_t**)samples);
+    encrypter_crypt(&self->encrypter, (void**)samples);
     // write the samples and keep track of the file size so far
     fwrite(samples, sizeof(int16_t), self->buffer_length, self->fd);
     self->file_size += sizeof(int16_t) * self->buffer_length;
@@ -51,5 +51,8 @@ void encryptedWavFile_finish(encryptedWavFile_t* self)
     self->header.data_bytes = self->file_size - sizeof(encrypted_wav_header_t);
     self->header.wav_size = self->file_size - 8;
     fseek(self->fd, 0, SEEK_SET);
-    fwrite(&self->header, sizeof(encrypted_wav_header_t), 1, self->fd);
+    encrypted_wav_header_t* encrypted_header = encrypter_crypt_specific(
+        &self->encrypter, &self->header, sizeof(encrypted_wav_header_t), 1);
+    fwrite(encrypted_header, sizeof(encrypted_wav_header_t), 1, self->fd);
+    free(encrypted_header);
 }
