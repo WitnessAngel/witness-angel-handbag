@@ -29,6 +29,7 @@ typedef struct _encrypted_wav_header
     int data_bytes; // Number of bytes in data. Number of samples * num_channels
                     // * sample byte size
                     // uint8_t bytes[]; // Remainder of wave file is bytes
+    int padding;
 } encrypted_wav_header_t;
 #pragma pack(pop)
 

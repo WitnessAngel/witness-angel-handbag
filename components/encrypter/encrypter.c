@@ -42,5 +42,4 @@ void encrypter_finish(encrypter_t* self)
 {
     free(self->buffer);
     esp_aes_free(&self->ctx);
-    ESP_LOGI(TAG, "Encrypter finish called");
 }
