@@ -1,3 +1,8 @@
+# Special for this project
+build
+*.old
+.cache
+
 # Prerequisites
 *.d
 
