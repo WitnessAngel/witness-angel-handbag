@@ -55,15 +55,5 @@ void encryptedWavFile_finish(encryptedWavFile_t* self)
 {
     ESP_LOGI(TAG, "WAV file size: %d", self->file_size);
 
-    // now fill in the header with the correct information and write it again
-    /* self->header.data_bytes = self->file_size -
-     * sizeof(encrypted_wav_header_t); */
-    /* self->header.wav_size = self->file_size - 8; */
-    /* fseek(self->fd, 0, SEEK_SET); */
-    /* encrypted_wav_header_t* encrypted_header = encrypter_crypt_specific( */
-    /*     &self->encrypter, &self->header, sizeof(encrypted_wav_header_t), 1);
-     */
-    /* fwrite(encrypted_header, sizeof(encrypted_wav_header_t), 1, self->fd); */
-    /* free(encrypted_header); */
     encrypter_finish(&self->encrypter);
 }
