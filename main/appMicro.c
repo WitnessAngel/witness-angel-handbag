@@ -30,7 +30,7 @@ void record(app_t* app, const char* fname)
     encryptedWavFile_init(&encryptedWavFile, fd_encrypt,
                           app->i2sMicro.sample_rate, BUFFER_LENGTH);
     size_t i = 0;
-    while (i < 200)
+    while (i < 100)
     {
         int samples_read =
             i2sMicro_read(&app->i2sMicro, samples, BUFFER_LENGTH);
