@@ -1,4 +1,5 @@
-idf_component_register(SRCS "encrypter.c"
+idf_component_register(SRCS "encrypter.c" "utils.c"
                        INCLUDE_DIRS "include"
-				       PRIV_REQUIRES mbedtls
+					   REQUIRES mbedtls
+				       PRIV_REQUIRES padding
 				      )

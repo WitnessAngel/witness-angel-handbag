@@ -1,4 +1,3 @@
-#include <aes/esp_aes.h>
 #include <esp_log.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,9 +8,9 @@
 static const char* TAG = "encryptedWavFile";
 
 void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate,
-                           size_t buffer_length)
+                           size_t file_size)
 {
-    encrypter_init(&self->encrypter, sizeof(int16_t), buffer_length);
+    encrypter_init(&self->encrypter);
 
     strcpy(self->header.riff_header, "RIFF");
     self->header.wav_size = 0;
@@ -26,34 +25,40 @@ void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate,
     self->header.bit_depth = 16;
     strcpy(self->header.data_header, "data");
     self->header.data_bytes = 0;
-    self->header.data_bytes = 204848 - sizeof(encrypted_wav_header_t);
-    self->header.wav_size = 204848 - 8;
-    self->header.padding = 0;
+    self->header.data_bytes = file_size - sizeof(encrypted_wav_header_t);
+    self->header.wav_size = file_size - 8;
 
     self->fd = fd;
-    self->buffer_length = buffer_length;
 
-    self->header.data_bytes = self->file_size - sizeof(encrypted_wav_header_t);
-    self->header.wav_size = self->file_size - 8;
-    ESP_LOGI(TAG, "header size = %u", sizeof(encrypted_wav_header_t));
-    encrypted_wav_header_t* encrypted_header = encrypter_crypt_specific(
-        &self->encrypter, &self->header, sizeof(encrypted_wav_header_t), 1);
-    fwrite(encrypted_header, sizeof(encrypted_wav_header_t), 1, self->fd);
+    size_t header_size = sizeof(encrypted_wav_header_t);
+
+    uint8_t* encrypted_header = encrypter_crypt(
+        &self->encrypter, (uint8_t*)&self->header, &header_size);
+    fwrite(encrypted_header, sizeof(uint8_t), header_size, self->fd);
     free(encrypted_header);
-    self->file_size = sizeof(encrypted_wav_header_t);
+
+    self->file_size = header_size;
 }
 
-void encryptedWavFile_write(encryptedWavFile_t* self, int16_t** samples)
+void encryptedWavFile_write(encryptedWavFile_t* self, const int16_t* samples,
+                            size_t samples_length)
 {
-    encrypter_crypt(&self->encrypter, (void**)samples);
-    // write the samples and keep track of the file size so far
-    fwrite(*samples, sizeof(int16_t), self->buffer_length, self->fd);
-    self->file_size += sizeof(int16_t) * self->buffer_length;
+    samples_length *= sizeof(int16_t);
+    uint8_t* encrypted_samples = encrypter_crypt(
+        &self->encrypter, (const uint8_t*)samples, &samples_length);
+    fwrite(encrypted_samples, sizeof(uint8_t), samples_length, self->fd);
+    self->file_size += samples_length;
+    free(encrypted_samples);
 }
 
 void encryptedWavFile_finish(encryptedWavFile_t* self)
 {
-    ESP_LOGI(TAG, "WAV file size: %d", self->file_size);
+    size_t samples_length = 0;
+    uint8_t* remain_encrypted_samples =
+        encrypter_finish(&self->encrypter, &samples_length);
+    fwrite(remain_encrypted_samples, sizeof(uint8_t), samples_length, self->fd);
+    self->file_size += samples_length;
+    free(remain_encrypted_samples);
 
-    encrypter_finish(&self->encrypter);
+    ESP_LOGI(TAG, "WAV file size : %d", self->file_size);
 }
