@@ -28,7 +28,6 @@ void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate,
     self->header.data_bytes = 0;
     self->header.data_bytes = 204848 - sizeof(encrypted_wav_header_t);
     self->header.wav_size = 204848 - 8;
-    self->header.padding = 0;
 
     self->fd = fd;
     self->buffer_length = buffer_length;
@@ -36,11 +35,17 @@ void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate,
     self->header.data_bytes = self->file_size - sizeof(encrypted_wav_header_t);
     self->header.wav_size = self->file_size - 8;
     ESP_LOGI(TAG, "header size = %u", sizeof(encrypted_wav_header_t));
+
+    size_t encrypted_header_size = sizeof(encrypted_wav_header_t);
+    size_t encrypted_header_length = 1;
     encrypted_wav_header_t* encrypted_header = encrypter_crypt_specific(
-        &self->encrypter, &self->header, sizeof(encrypted_wav_header_t), 1);
-    fwrite(encrypted_header, sizeof(encrypted_wav_header_t), 1, self->fd);
+        &self->encrypter, &self->header, &encrypted_header_size,
+        &encrypted_header_length);
+    fwrite(encrypted_header, encrypted_header_size, encrypted_header_length,
+           self->fd);
     free(encrypted_header);
-    self->file_size = sizeof(encrypted_wav_header_t);
+
+    self->file_size = encrypted_header_length * encrypted_header_size;
 }
 
 void encryptedWavFile_write(encryptedWavFile_t* self, int16_t** samples)

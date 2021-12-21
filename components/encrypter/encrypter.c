@@ -3,8 +3,9 @@
 #include <string.h>
 
 #include "encrypter.h"
+#include "padding.h"
 
-static const char* TAG = "encrypter";
+/* static const char* TAG = "encrypter"; */
 
 void encrypter_init(encrypter_t* self, size_t buffer_size, size_t buffer_length)
 {
@@ -20,11 +21,20 @@ void encrypter_init(encrypter_t* self, size_t buffer_size, size_t buffer_length)
 }
 
 void* encrypter_crypt_specific(encrypter_t* self, const void* data,
-                               size_t data_size, size_t data_length)
+                               size_t* data_size, size_t* data_length)
 {
-    uint8_t* crypted_data = (uint8_t*)malloc(data_size * data_length);
-    esp_aes_crypt_cbc(&self->ctx, ESP_AES_ENCRYPT, data_size * data_length,
-                      self->iv, (const uint8_t*)data, (uint8_t*)crypted_data);
+    uint8_t* padded_data;
+    size_t padded_length = padding_pad_buffer(
+        (const uint8_t*)data, *data_size * *data_length, &padded_data);
+
+    *data_size = sizeof(uint8_t);
+    *data_length = padded_length;
+    uint8_t* crypted_data = (uint8_t*)malloc(*data_size * *data_length);
+    esp_aes_crypt_cbc(&self->ctx, ESP_AES_ENCRYPT, *data_size * *data_length,
+                      self->iv, (const uint8_t*)padded_data,
+                      (uint8_t*)crypted_data);
+
+    free(padded_data);
     return ((void*)crypted_data);
 }
 

@@ -4,7 +4,6 @@
 #include "app.h"
 #include "encryptedWavFile.h"
 #include "i2sMicro.h"
-#include "wavFile.h"
 
 /* void record(I2SSampler *input, const char *fname) { */
 

@@ -18,6 +18,6 @@ void encrypter_init(encrypter_t* self, size_t buffer_size,
 
 void encrypter_crypt(encrypter_t* self, void** data);
 void* encrypter_crypt_specific(encrypter_t* self, const void* data,
-                               size_t data_size, size_t data_length);
+                               size_t* data_size, size_t* data_length);
 
 void encrypter_finish(encrypter_t* self);
