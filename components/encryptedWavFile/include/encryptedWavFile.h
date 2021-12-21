@@ -1,7 +1,5 @@
 #pragma once
 
-#include <aes/esp_aes.h>
-
 #include "encrypter.h"
 
 #pragma pack(push, 1)
@@ -38,11 +36,11 @@ struct encryptedWavFile_s
     size_t file_size;
     FILE* fd;
     encrypted_wav_header_t header;
-    size_t buffer_length;
     encrypter_t encrypter;
 };
 
 void encryptedWavFile_init(encryptedWavFile_t* self, FILE* fd, int sample_rate,
-                           size_t buffer_length);
-void encryptedWavFile_write(encryptedWavFile_t* self, int16_t** samples);
+                           size_t file_size);
+void encryptedWavFile_write(encryptedWavFile_t* self, const int16_t* samples,
+                            size_t samples_length);
 void encryptedWavFile_finish(encryptedWavFile_t* self);
