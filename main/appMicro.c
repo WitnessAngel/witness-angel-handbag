@@ -8,7 +8,7 @@
 #include "i2sMicro.h"
 
 #define BUFFER_LENGTH 1024
-#define DURATION_SEC 30
+#define DURATION_SEC 5
 #define ITERATION roundf(15.625 * DURATION_SEC)
 
 static const char* TAG = "appMicro";
@@ -34,12 +34,11 @@ void record(app_t* app, const char* fname)
     {
         int samples_read =
             i2sMicro_read(&app->i2sMicro, samples, BUFFER_LENGTH);
-        /* int64_t start = esp_timer_get_time(); */
+        int64_t start = esp_timer_get_time();
         encryptedWavFile_write(&encryptedWavFile, samples, samples_read);
-        /* int64_t end = esp_timer_get_time(); */
-        /* ESP_LOGI(TAG, "Wrote %d samples in %lld microseconds", samples_read,
-         */
-        /*          end - start); */
+        int64_t end = esp_timer_get_time();
+        ESP_LOGI(TAG, "Wrote %d samples in %lld microseconds", samples_read,
+                 end - start);
         i++;
     }
     // stop the input

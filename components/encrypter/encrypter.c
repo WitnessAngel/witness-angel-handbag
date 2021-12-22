@@ -3,6 +3,8 @@
 #include <string.h>
 #include <strings.h>
 
+#include <aes/esp_aes.h>
+
 #include "encrypter.h"
 #include "pkcs7_padding.h"
 #include "utils.h"
@@ -15,8 +17,7 @@ void encrypter_init(encrypter_t* self)
     self->memdesc[0].ptr = (uint8_t*)malloc(sizeof(uint8_t) * 16);
     esp_aes_init(&self->ctx);
 
-    strcpy((char*)self->key, "(H+MbQeThWmZq4t7w!z%C*F-J@NcRfUj");
-    memset(self->iv, 0, sizeof(self->iv));
+    key_generation(self);
 
     esp_aes_setkey(&self->ctx, self->key, 256);
 }
