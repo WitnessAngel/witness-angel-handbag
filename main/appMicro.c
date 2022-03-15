@@ -8,7 +8,7 @@
 #include "i2sMicro.h"
 
 #define BUFFER_LENGTH 1024
-#define DURATION_SEC 30
+#define DURATION_SEC 15
 #define ITERATION roundf(15.625 * DURATION_SEC)
 
 static const char* TAG = "appMicro";

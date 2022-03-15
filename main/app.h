@@ -11,3 +11,5 @@ struct app_s
 };
 
 void record(app_t* app, const char* fname);
+
+void first_init(app_t* app);
