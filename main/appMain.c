@@ -37,13 +37,13 @@ void app_main(void)
 
     ESP_ERROR_CHECK(app_init(&app));
     /* TEST */
-    first_init(&app);
+    ESP_ERROR_CHECK(first_init(&app));
 
     /* END TEST */
     /* ESP_ERROR_CHECK(heap_trace_init_standalone(trace_record, NUM_RECORDS));
      */
 
-    ESP_LOGI(TAG, "appMicro begin");
+    /* ESP_LOGI(TAG, "appMicro begin"); */
 
     /* ESP_LOGI(TAG, "Free heap at startup : %u", */
     /*          heap_caps_get_free_size(MALLOC_CAP_8BIT)); */
