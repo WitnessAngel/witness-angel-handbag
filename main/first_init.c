@@ -24,77 +24,6 @@
    CONFIG_UART_TXD = 1
    CONFIG_UART_RTS = 22 */
 
-void encrypted_uart_init(encrypted_uart_t* encrypted_uart,
-                         const unsigned char* key, const size_t keylen)
-{
-    int ret = 0;
-    mbedtls_pk_init(&encrypted_uart->pk);
-
-    /*
-     * Read the RSA public key
-     */
-    if ((ret = mbedtls_pk_parse_public_key(&encrypted_uart->pk, key, keylen)) !=
-        0)
-    {
-        ESP_LOGE(
-            TAG,
-            " failed\n  ! mbedtls_pk_parse_public_keyfile returned -0x%04x\n",
-            -ret);
-    }
-
-    mbedtls_entropy_init(&encrypted_uart->entropy);
-    mbedtls_ctr_drbg_init(&encrypted_uart->drbg);
-
-    int pub_ret;
-    const char* pers = "encrypted_uart_communication";
-
-    /* Seed the PRNG using the entropy pool, and throw in our secret key as an
-     * additional source of randomness. */
-
-    pub_ret = mbedtls_ctr_drbg_seed(&encrypted_uart->drbg, mbedtls_entropy_func,
-                                    &encrypted_uart->entropy,
-                                    (const unsigned char*)pers, strlen(pers));
-
-    if (pub_ret != 0)
-    {
-        ESP_LOGE(TAG,
-                 "Mauvaise configuration de la fonction mbedtls_ctr_drbg_seed");
-    }
-
-    mbedtls_ctr_drbg_random(&encrypted_uart->drbg, encrypted_uart->buf_drbg,
-                            256);
-}
-
-void encrypt(encrypted_uart_t* encrypted_uart, const unsigned char* input,
-             unsigned char* output, size_t input_length, size_t output_length)
-{
-    int ret;
-
-    if ((ret = mbedtls_pk_encrypt(&encrypted_uart->pk, input, input_length,
-                                  output, &output_length, sizeof(output),
-                                  mbedtls_ctr_drbg_random,
-                                  &encrypted_uart->drbg)) != 0)
-    {
-        ESP_LOGE(TAG, " failed\n  ! mbedtls_pk_encrypt returned -0x%04x\n",
-                 -ret);
-    }
-}
-
-void decrypt(encrypted_uart_t* encrypted_uart, const unsigned char* input,
-             unsigned char* output, size_t input_length, size_t output_length)
-{
-    int ret;
-
-    if ((ret = mbedtls_pk_decrypt(&encrypted_uart->pk, input, input_length,
-                                  output, &output_length, sizeof(output),
-                                  mbedtls_ctr_drbg_random,
-                                  &encrypted_uart->drbg)) != 0)
-    {
-        ESP_LOGE(TAG, " failed\n  ! mbedtls_pk_decrypt returned -0x%04x\n",
-                 -ret);
-    }
-}
-
 static void rs_send(const int port, const char* str, size_t size)
 {
     if (uart_write_bytes(port, str, size) != size)
@@ -105,35 +34,10 @@ static void rs_send(const int port, const char* str, size_t size)
     }
 }
 
-static void rs_rpc_response(uart_t* uart, t_vector* input)
+static void rs_rpc_parse_string(uart_t* uart, t_vector* input)
 {
     RPCJson_t request;
     RPCJson_t response;
-    int id = 0;
-
-    /* char test[] = "{\"jsonrpc\": \"2.0\", \"method\": \"ping\", \"id\": 40}";
-     */
-    /* cJSON* testing = cJSON_Parse(input->data); */
-    /* if (testing == NULL) */
-    /* { */
-    /*     rs_send(ECHO_UART_PORT, "\nError: 'parse json failed'", */
-    /*             strlen("\nError: 'parse json failed'")); */
-    /* } */
-
-    /* rpc_json_create_request(&testing, "ping", 1); */
-    /* char* jsontesting_string = cJSON_Print(testing.rpc_json_obj); */
-    /* rs_send(ECHO_UART_PORT, jsontesting_string,
-     * strlen(jsontesting_string));
-     */
-    /* if (!cJSON_Parse(test)) */
-    /*     rs_send(ECHO_UART_PORT, "\nError: Test cJSON\n", */
-    /*             strlen("\nError: Test cJSON\n")); */
-    /* else */
-    /*     rs_send(ECHO_UART_PORT, "\nOk: Test cJSON\n", */
-    /*             strlen("\nOk: Test cJSON\n")); */
-    /* if (!rpc_json_parse(&request, jsontesting_string)) */
-    /*     rs_send(ECHO_UART_PORT, "\nError: Test\n", strlen("\nError:
-     * Test\n")); */
 
     if (!rpc_json_parse(&request, (char*)input->data))
     {
@@ -141,28 +45,49 @@ static void rs_rpc_response(uart_t* uart, t_vector* input)
                 strlen("\nError: 'rpc json parse fail'"));
         return;
     }
-    if (!rpc_json_get_id(&request, &id))
-        rs_send(uart->port_num, "\nError:\nrpc json get fail",
-                strlen("\nError:\nrpc json get fail"));
-    if (!rpc_json_create_response(&response, id, 42))
+    else if (request.type == RPC_JSON_REQUEST)
     {
-        /* rpc_json_create_error(&response, 0, 1, "rpc_json_parse error");
-         */
+        int id;
+        jsonrpc_method_t method =
+            get_method_from(rpc_json_get_method(&request));
+        rpc_json_get_id(&request, &id);
+
+        switch (method)
+        {
+            case ping:
+                response = rs_rpc_parse_ping(id);
+                break;
+            case status:
+                response = rs_rpc_parse_status(id);
+                break;
+            case add_aes_cbc_symkey:
+                response = rs_rpc_parse_add_aes_cbc_symkey(id, &request);
+                break;
+            default:
+                rpc_json_create_error(&response, id, 101,
+                                      "rpc_json_parse error");
+                break;
+        }
+    }
+    char* json_string = cJSON_PrintUnformatted(response.rpc_json_obj);
+    rs_send(uart->port_num, json_string, strlen(json_string));
+
+    /* snprintf(debug, 100, "\nInfo:\nid = %d", id); */
+    /* rs_send(uart->port_num, debug, strlen(debug)); */
+
+    /* if (!rpc_json_create_response(&response, id, 42))
+    {
         ESP_LOGE(TAG, "rpc json create response fail");
         rs_send(uart->port_num, "\nError:\nrpc json create response fail",
                 strlen("\nError:\nrpc json create response fail"));
         return;
-    }
-    char* json_string = cJSON_PrintUnformatted(response.rpc_json_obj);
-    rs_send(uart->port_num, json_string, strlen(json_string));
+        } */
 }
 
 // uart_task with hardware flow control on UART
 static void uart_task(void* arg)
 {
     uart_t* uart = (uart_t*)arg;
-    encrypted_uart_t receive;
-    encrypted_uart_t send;
 
     ESP_LOGI(TAG, "UART start receive loop.\r\n");
 
@@ -182,7 +107,7 @@ static void uart_task(void* arg)
                 vecpush(vec, (const char*)&uart->data[i]);
             }
             /* rs_send(uart->port_num, (char*)vec->data, vec->length); */
-            rs_rpc_response(uart, vec);
+            rs_rpc_parse_string(uart, vec);
             vecfree(vec);
         }
         else

@@ -8,7 +8,7 @@
 #include "noVolatileStorage.h"
 #include "sdCard.h"
 
-static const char* TAG = "appMain";
+#define TAG "appMain"
 
 static esp_err_t app_init(app_t* app)
 {
