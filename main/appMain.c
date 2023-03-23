@@ -14,8 +14,7 @@ static esp_err_t app_init(app_t* app)
 {
     esp_err_t err;
 
-    if ((err = nvs_init()))
-    /* || (err = sdCard_init()) */
+    if ((err = nvs_init()) || (err = sdCard_init()))
     /* || (err = i2sMicro_init(&app->i2sMicro))) */
     {
         ESP_LOGE(TAG, "Error during app init : (%s) !\n", esp_err_to_name(err));
