@@ -3,6 +3,7 @@ build
 *.old
 .cache
 .ccls-cache
+___*
 
 # Prerequisites
 *.d
